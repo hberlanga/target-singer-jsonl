@@ -126,7 +126,7 @@ def persist_lines(config, lines):
             if "stream" not in message:
                 raise Exception(f"Line is missing required key 'stream': {line}")
 
-            stream = message["stream"]
+            stream = str(message["stream"]).replace("-","_")
 
             if stream not in stream_lines:
                 stream_lines[stream] = []
@@ -138,6 +138,7 @@ def persist_lines(config, lines):
                 )
 
             record = message["record"]
+            message["stream"] = str(message.get("stream")).replace("-","_")
             # Get schema for this record's stream
             schema = schemas[stream]
             # Validate record
@@ -183,6 +184,7 @@ def persist_lines(config, lines):
                 for col in {"_sdc_sequence", "_sdc_table_version"}:
                     properties_dict[col] = {"type": ["null", "integer"]}
             # Queue message for write
+            message["stream"] = str(message.get("stream")).replace("-","_")
             stream_lines[stream].append(json.dumps(message))
 
         elif t == "STATE":
@@ -191,7 +193,8 @@ def persist_lines(config, lines):
             # state messages from observed records on read
             logger.debug(f'Setting state to {message["value"]}')
             state = message["value"]
-
+        elif t == "ACTIVATE_VERSION":
+            continue
         else:
             raise Exception(f"Unknown message type {t} in message {message}")
 
